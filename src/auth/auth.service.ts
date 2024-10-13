@@ -84,6 +84,8 @@ export class AuthService {
         secret: this.configService.getOrThrow<string>('JWT_RT_SECRET'),
       },
     );
+
+    // Устанавливаем куки
     response.cookie('AccessToken', accessToken, {
       httpOnly: true,
       sameSite: 'none',
@@ -98,6 +100,21 @@ export class AuthService {
       expires: rtExpiresIn,
       domain: this.configService.getOrThrow<string>('API_DOMAIN'),
     });
+
+    // Сохраняем информацию о Refresh Token
+    await this.saveRefreshToken(user.id, refreshToken, rtExpiresIn);
+  }
+
+  private async saveRefreshToken(
+    userId: string,
+    token: string,
+    expiresAt: Date,
+  ) {
+    await this.cacheManager.set(
+      `rt_${userId}`,
+      token,
+      Math.floor((expiresAt.getTime() - Date.now()) / 1000),
+    );
   }
 
   async verifyUserRefreshToken(refreshToken: string, userId: string) {
@@ -109,7 +126,7 @@ export class AuthService {
         userId,
       );
       if (tokenBlacklisted)
-        throw new UnauthorizedException('Токен в черном списке');
+        throw new UnauthorizedException('Токен в чернм списке');
       await this.blacklistToken(refreshToken, userId);
       return user;
     } catch (error) {
@@ -306,5 +323,43 @@ export class AuthService {
       );
     }
     return session.user;
+  }
+
+  async refreshTokens(refreshToken: string, response: Response): Promise<User> {
+    try {
+      const decoded = this.jwtService.verify(refreshToken, {
+        secret: this.configService.getOrThrow<string>('JWT_RT_SECRET'),
+      });
+
+      const user = await this.usersService.findById(decoded.userId);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      const tokenBlacklisted = await this.verifyTokenBlackListed(
+        refreshToken,
+        user.id,
+      );
+      if (tokenBlacklisted) {
+        throw new UnauthorizedException('Token is blacklisted');
+      }
+
+      // Генерируем новые токены
+      await this.login(user, response);
+
+      // Обновляем время жизни Refresh Token (скользящее окно)
+      const cookies = response.getHeader('Set-Cookie');
+      const newRefreshToken = Array.isArray(cookies)
+        ? cookies.find((cookie) => cookie.startsWith('RefreshToken='))
+        : undefined;
+
+      if (newRefreshToken) {
+        await this.blacklistToken(refreshToken, user.id);
+      }
+
+      return user;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }
