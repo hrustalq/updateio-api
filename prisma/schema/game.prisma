@@ -1,0 +1,14 @@
+model Game {
+  id         String   @id @default(uuid())
+
+  name       String
+  version    Float?
+  patchNotes PatchNote[]
+  image      String?
+
+  appsWithGame GameOnApp[]
+  userSubscriptions UserGameSubscription[]
+  settings Settings[]
+
+  @@map("games")
+}

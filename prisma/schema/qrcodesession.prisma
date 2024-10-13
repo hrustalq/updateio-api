@@ -1,0 +1,19 @@
+model QRCodeSession {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  status    QRCodeSessionStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("qr_code_sessions")
+}
+
+enum QRCodeSessionStatus {
+  PENDING
+  CONFIRMED
+  EXPIRED
+}

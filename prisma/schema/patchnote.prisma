@@ -1,0 +1,18 @@
+model PatchNote {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  version    String?
+  releaseDate DateTime
+
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  appId      String
+  app        App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("patch_notes")
+}

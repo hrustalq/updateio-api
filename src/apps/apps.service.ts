@@ -1,0 +1,128 @@
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreateAppDto } from './dto/create-app.dto';
+import { UpdateAppDto } from './dto/update-app.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { PaginationParamsDto } from '../common/dto/pagination.dto';
+import { PaginatedResult } from '../common/utils/paginated';
+import { App } from '@prisma/client';
+import { S3Service } from '../s3/s3.service';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+
+@Injectable()
+export class AppsService {
+  constructor(
+    private readonly prismaService: PrismaService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly s3Service: S3Service,
+  ) {}
+
+  async create(createAppDto: CreateAppDto, image?: Express.Multer.File) {
+    let imageUrl: string | undefined;
+
+    if (image) {
+      const key = `apps/${Date.now()}-${image.originalname}`;
+      imageUrl = await this.s3Service.uploadFile(image, key);
+    }
+
+    const app = await this.prismaService.app.create({
+      data: {
+        ...createAppDto,
+        image: imageUrl,
+      },
+    });
+    this.cacheManager.set(`apps_${app.id}`, app);
+    this.clearPaginatedCache();
+    return app;
+  }
+
+  async findAll(pagination: PaginationParamsDto) {
+    const cacheKey = `apps_page_${pagination.page}_limit_${pagination.limit}`;
+    const cachedResult =
+      await this.cacheManager.get<PaginatedResult<App>>(cacheKey);
+
+    if (cachedResult) {
+      return cachedResult;
+    }
+
+    const skip = (pagination.page - 1) * pagination.limit;
+    try {
+      const result = await this.prismaService.app.findMany({
+        take: pagination.limit,
+        skip,
+      });
+      const count = await this.prismaService.app.count();
+      const paginatedResult = new PaginatedResult<App>(
+        result,
+        pagination.page,
+        pagination.limit,
+        count,
+      );
+
+      // Cache the result for 5 minutes (300 seconds)
+      this.cacheManager.set(cacheKey, paginatedResult, 1000 * 60 * 5);
+
+      return paginatedResult;
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException();
+    }
+  }
+
+  async findOne(id: string) {
+    const cachedGame: App = await this.cacheManager.get(`apps_${id}`);
+    if (cachedGame) return cachedGame;
+    const app = await this.prismaService.app.findUnique({
+      where: { id },
+    });
+    if (!app) {
+      throw new NotFoundException('Приложение с указанным ID не найдено');
+    }
+    this.cacheManager.set(`apps_${id}`, app);
+    return app;
+  }
+
+  async update(
+    id: string,
+    updateAppDto: UpdateAppDto,
+    image?: Express.Multer.File,
+  ) {
+    let imageUrl: string | undefined;
+
+    if (image) {
+      const key = `apps/${Date.now()}-${image.originalname}`;
+      imageUrl = await this.s3Service.uploadFile(image, key);
+    }
+
+    const newImage = await this.prismaService.app.update({
+      where: { id },
+      data: {
+        ...updateAppDto,
+        ...(imageUrl && { image: imageUrl }),
+      },
+    });
+    this.cacheManager.set(`apps_${newImage.id}`, newImage);
+    return newImage;
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    const deleted = await this.prismaService.app.delete({ where: { id } });
+    await this.cacheManager.del(`apps_${id}`);
+
+    // Clear paginated results cache when an app is deleted
+    await this.clearPaginatedCache();
+
+    return deleted;
+  }
+
+  private async clearPaginatedCache() {
+    const keys = await this.cacheManager.store.keys();
+    const paginatedKeys = keys.filter((key) => key.startsWith('apps_page_'));
+    await Promise.all(paginatedKeys.map((key) => this.cacheManager.del(key)));
+  }
+}

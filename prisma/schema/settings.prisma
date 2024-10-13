@@ -1,0 +1,15 @@
+model Settings {
+  id         String   @id @default(uuid())
+  executorName  String @unique
+  updateCommand String?
+
+  gameId  String
+  game    Game   @relation(fields: [gameId], references: [id])
+  
+  appId   String
+  app     App    @relation(fields: [appId], references: [id])
+
+  @@unique([gameId, appId])
+
+  @@map("games_settings")
+}

@@ -1,0 +1,11 @@
+model GameOnApp {
+  id      String @id @default(cuid())
+  gameId  String
+  game    Game   @relation(fields: [gameId], references: [id])
+  appId   String
+  app     App    @relation(fields: [appId], references: [id])
+
+  @@unique([gameId, appId])
+
+  @@map("game_and_app_pair")
+}
