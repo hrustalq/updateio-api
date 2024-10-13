@@ -28,6 +28,7 @@ export class UsersService {
     return this.prismaService.user.create({
       data: {
         ...payload,
+        isBot: payload.isBot || false,
         passwordHash,
       },
     });
@@ -42,13 +43,13 @@ export class UsersService {
         select: {
           id: true,
           role: true,
-          first_name: true,
-          last_name: true,
-          is_bot: true,
-          is_premium: true,
+          firstName: true,
+          lastName: true,
+          isBot: true,
+          isPremium: true,
           username: true,
           apiKey: true,
-          added_to_attachment_menu: true,
+          addedToAttachMenu: true,
         },
       });
       const count = await this.prismaService.user.count();

@@ -1,16 +1,16 @@
 model User {
   id           String @id
 
-  is_bot       Boolean
-  first_name   String
-  last_name    String?
+  isBot       Boolean
+  firstName   String
+  lastName    String?
   username     String?
-  language_code String?
-  is_premium   Boolean?
+  languageCode String?
+  isPremium   Boolean?
 
-  allows_write_to_pm Boolean? @default(true)
+  allowsWriteToPm Boolean? @default(true)
 
-  added_to_attachment_menu Boolean?
+  addedToAttachMenu Boolean?
 
   apiKey       String @unique @default(uuid())
 

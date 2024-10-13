@@ -15,11 +15,10 @@ import { Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
-import { RegisterDto } from './dto/register.dto';
-import { InitDataDto } from './dto/init-data.dto';
 import { QrCodeService } from './qr-code.service';
 import { QrCodeGateway } from './qr-code.gateway';
-import { validate } from '@telegram-apps/init-data-node';
+import { InitData } from '@telegram-apps/init-data-node';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -175,7 +174,7 @@ export class AuthService {
     });
   }
 
-  async register(registerDto: RegisterDto): Promise<User> {
+  async register(registerDto: CreateUserDto): Promise<User> {
     const existingUser = await this.usersService
       .findById(registerDto.id)
       .catch(() => null);
@@ -201,101 +200,25 @@ export class AuthService {
     return Math.random().toString(36).slice(-8);
   }
 
-  async validateInitData(
-    initData: InitDataDto,
-    raw: string,
-  ): Promise<User | null> {
-    const isValid = await this.validateTelegramHash(raw);
-    if (!isValid) {
-      return null;
-    }
+  async validateInitData(initData: InitData): Promise<User> {
+    const { user } = initData;
 
-    let user = await this.usersService.findById(initData.user.id.toString());
-    if (!user) {
-      // Если пользователь не существует, создаем нового
-      user = await this.usersService.create({
-        id: initData.user.id.toString(),
-        username: initData.user.username,
-        first_name: initData.user.first_name,
-        last_name: initData.user.last_name,
-        is_bot: false,
-      });
-    }
-
-    return user;
-  }
-
-  private async validateTelegramHash(raw: string): Promise<boolean> {
-    const botToken =
-      this.configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN');
-    if (!botToken) {
-      throw new Error('TELEGRAM_BOT_TOKEN is not set in the configuration');
-    }
-
-    try {
-      validate(raw, botToken);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  async loginWithInitData(
-    initDataDto: InitDataDto,
-    raw: string,
-  ): Promise<User> {
-    const isValid = this.validateTelegramHash(raw);
-
-    if (!isValid) {
-      throw new BadRequestException('Invalid Telegram data');
-    }
-
-    const { user } = initDataDto;
-
-    const existingUser = await this.usersService.findById(user.id.toString());
-    if (existingUser) {
-      // Обновляем существующего пользователя
-      return this.usersService.update(user.id.toString(), {
-        first_name: user.first_name,
-        username: user.username,
-        language_code: user.language_code,
-        is_premium: user.is_premium,
+    let dbUser = await this.usersService.findById(user.id.toString());
+    if (!dbUser) {
+      // If the user doesn't exist, create a new one
+      dbUser = await this.usersService.create({
+        ...user,
+        id: user.id.toString(),
       });
     } else {
-      // Создаем нового пользователя
-      const newUser = await this.usersService.create({
+      // If the user exists, update their information
+      dbUser = await this.usersService.update(user.id.toString(), {
+        ...user,
         id: user.id.toString(),
-        first_name: user.first_name,
-        username: user.username,
-        language_code: user.language_code,
-        is_premium: user.is_premium,
-        is_bot: false,
       });
-      return newUser;
-    }
-  }
-
-  async registerWithTelegram(
-    initDataDto: InitDataDto,
-    raw: string,
-  ): Promise<User> {
-    const isValid = this.validateTelegramHash(raw);
-
-    if (!isValid) {
-      throw new BadRequestException('Invalid Telegram data');
     }
 
-    const { user } = initDataDto;
-    const passwordHash = this.generateRandomPassword();
-
-    const userDto: RegisterDto = {
-      ...user,
-      id: user.id.toString(),
-      password: passwordHash,
-      is_bot: false,
-    };
-
-    return this.usersService.create(userDto);
+    return dbUser;
   }
 
   async generateQRCode(): Promise<string> {

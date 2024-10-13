@@ -14,19 +14,19 @@ async function main() {
     update: {
       username: 'Kryst4l320',
       passwordHash: passwordHash,
-      is_bot: false,
-      first_name: "El'dar",
+      isBot: false,
+      firstName: "El'dar",
       role: UserRole.ADMIN,
-      language_code: 'ru',
+      languageCode: 'en',
     },
     create: {
       id: '678478970',
       username: 'Kryst4l320',
       passwordHash: passwordHash,
-      is_bot: false,
-      first_name: "El'dar",
+      isBot: false,
+      firstName: "El'dar",
       role: UserRole.ADMIN,
-      language_code: 'ru',
+      languageCode: 'en',
     },
   });
 

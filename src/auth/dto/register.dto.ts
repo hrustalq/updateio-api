@@ -24,7 +24,7 @@ export class RegisterDto {
   })
   @IsNotEmpty()
   @IsString()
-  first_name: string;
+  firstName: string;
 
   @ApiProperty({
     example: 'Doe',
@@ -32,7 +32,7 @@ export class RegisterDto {
   })
   @IsOptional()
   @IsString()
-  last_name?: string;
+  lastName?: string;
 
   @ApiProperty({
     example: 'username',
@@ -58,7 +58,7 @@ export class RegisterDto {
   })
   @IsOptional()
   @IsString()
-  language_code?: string;
+  languageCode?: string;
 
   @ApiProperty({
     example: 'true',
@@ -74,7 +74,7 @@ export class RegisterDto {
   })
   @IsNotEmpty()
   @IsBoolean()
-  is_bot: boolean;
+  isBot: boolean;
 
   @ApiProperty({
     example: 'true',

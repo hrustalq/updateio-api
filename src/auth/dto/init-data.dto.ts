@@ -5,25 +5,25 @@ import {
   ValidateNested,
   IsBoolean,
   IsOptional,
-  IsDateString,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TelegramUser {
-  @ApiProperty({ example: '99281932' })
+  @ApiProperty({ example: 99281932 })
   @IsNotEmpty()
-  @IsString()
-  id: string;
+  @IsNumber()
+  id: number;
 
   @ApiProperty({ example: 'Ivan' })
   @IsNotEmpty()
   @IsString()
-  first_name: string;
+  firstName: string;
 
-  @ApiProperty({ example: 'Ivanov' })
+  @ApiProperty({ example: 'Ivanov', required: false })
   @IsOptional()
   @IsString()
-  last_name: string | null;
+  lastName?: string;
 
   @ApiProperty({ example: 'Kryst4l320', required: false })
   @IsString()
@@ -32,38 +32,42 @@ export class TelegramUser {
 
   @ApiProperty({ example: 'en' })
   @IsString()
-  language_code: string;
+  languageCode: string;
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ example: true, required: false })
   @IsBoolean()
-  is_premium: boolean;
+  @IsOptional()
+  isPremium?: boolean;
 
-  @ApiProperty({ example: true })
+  @ApiProperty({ example: true, required: false })
   @IsBoolean()
-  allows_write_to_pm: boolean;
+  @IsOptional()
+  allowsWriteToPm?: boolean;
 }
 
 export class InitDataDto {
   @ApiProperty({
     description: 'Дата авторизации',
-    example: '2024-05-28T19:00:46.000Z',
+    example: 1653766846,
   })
-  @IsDateString()
-  auth_date: string;
+  @IsNumber()
+  authDate: number;
 
   @ApiProperty({
     description: 'Идентификатор чата',
     example: '8428209589180549439',
   })
   @IsString()
-  chat_instance: string;
+  @IsOptional()
+  chatInstance?: string;
 
   @ApiProperty({
     description: 'Тип чата',
     example: 'sender',
   })
   @IsString()
-  chat_type: string;
+  @IsOptional()
+  chatType?: string;
 
   @ApiProperty({
     description: 'Хеш для проверки подлинности данных',
@@ -78,7 +82,7 @@ export class InitDataDto {
   })
   @IsString()
   @IsOptional()
-  start_param?: string;
+  startParam?: string;
 
   @ApiProperty({
     description: 'Данные пользователя Telegram',

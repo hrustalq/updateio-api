@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 import {
   IsBoolean,
   IsEnum,
@@ -9,7 +9,7 @@ import {
   MinLength,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class CreateUserDto implements Partial<User> {
   @ApiProperty({
     example: '6234567890',
     description: 'ID пользователя в Telegram',
@@ -24,7 +24,7 @@ export class CreateUserDto {
   })
   @IsNotEmpty()
   @IsString()
-  first_name: string;
+  firstName: string;
 
   @ApiProperty({
     example: 'Doe',
@@ -32,7 +32,7 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsString()
-  last_name?: string;
+  lastName?: string;
 
   @ApiProperty({
     example: 'username',
@@ -58,7 +58,7 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsString()
-  language_code?: string;
+  languageCode?: string;
 
   @ApiProperty({
     example: 'true',
@@ -66,15 +66,16 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsBoolean()
-  is_premium?: boolean;
+  isPremium?: boolean;
 
   @ApiProperty({
     example: 'false',
     description: 'Является ли пользователь ботом',
   })
   @IsNotEmpty()
+  @IsOptional()
   @IsBoolean()
-  is_bot: boolean;
+  isBot?: boolean;
 
   @ApiProperty({
     example: 'true',
@@ -82,7 +83,15 @@ export class CreateUserDto {
   })
   @IsOptional()
   @IsBoolean()
-  added_to_attachment_menu?: boolean;
+  addedToAttachMenu?: boolean;
+
+  @ApiProperty({
+    example: 'true',
+    description: 'Пользователь разрешает писать в личные сообщения',
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowsWriteToPm?: boolean;
 
   @ApiProperty({
     example: 'admin',

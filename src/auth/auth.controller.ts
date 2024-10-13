@@ -6,7 +6,6 @@ import {
   HttpStatus,
   HttpCode,
   Body,
-  Req,
   Param,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -22,6 +21,7 @@ import {
   ApiCreatedResponse,
   ApiBadRequestResponse,
   ApiResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -29,9 +29,6 @@ import { User } from '@prisma/client';
 import { LoginDto } from './dto/login.dto';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { RegisterDto } from './dto/register.dto';
-import { InitDataDto } from './dto/init-data.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
 import { Public } from 'src/common/decorators/public.decorator';
 
 @ApiTags('Аутентификация / авторизация')
@@ -131,43 +128,22 @@ export class AuthController {
   }
 
   @Post('login/telegram')
-  @UseGuards(AuthGuard('telegram'))
   @ApiOperation({ summary: 'Вход через Telegram' })
-  @ApiBody({ type: InitDataDto })
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Telegram Web App Data (format: "tma <initDataRaw>")',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Успешная аутентификация через Telegram',
+  })
+  @ApiUnauthorizedResponse({ description: 'Неверные данные для входа' })
   async loginTelegram(
-    @Req() req: Request,
+    @CurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = req.user;
     await this.authService.login(user, res);
     return { message: 'Успешная аутентификация через Telegram' };
-  }
-
-  @Post('register/telegram')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Регистрация пользователя через Telegram Mini App' })
-  @ApiCreatedResponse({
-    description: 'Пользователь успешно зарегистрирован',
-    headers: {
-      'Set-Cookie': {
-        description: 'AccessToken и RefreshToken устанавливаются в куки',
-        schema: {
-          type: 'string',
-        },
-      },
-    },
-  })
-  @ApiBody({
-    type: InitDataDto,
-    description: 'Параметры регистрации из Telegram',
-  })
-  async registerWithTelegram(
-    @Body() { raw, initData }: { raw: string; initData: InitDataDto },
-    @Res({ passthrough: true }) response: Response,
-  ) {
-    const user = await this.authService.registerWithTelegram(initData, raw);
-    await this.authService.login(user, response);
-    return { message: 'Пользователь успешно зарегистрирован через Telegram' };
   }
 
   @Post('qr-code/generate')
