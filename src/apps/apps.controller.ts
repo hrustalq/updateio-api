@@ -36,8 +36,11 @@ import {
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AppResponseDto } from './dto/app-response.dto';
+import { App } from './entities/app.entity';
+import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
 
 @ApiTags('Приложения')
+@ApiGlobalErrorResponses()
 @Controller('apps')
 export class AppsController {
   constructor(private readonly appsService: AppsService) {}
@@ -89,17 +92,24 @@ export class AppsController {
     type: String,
     description: 'Фильтр по имени приложения',
   })
+  @ApiQuery({
+    name: 'gameId',
+    required: false,
+    type: String,
+    description: 'Фильтр по ID игры, к которой привязано приложение',
+  })
   findAll(
     @PaginationQuery() pagination: PaginationParamsDto,
     @Query('name') name?: string,
+    @Query('gameId') gameId?: string,
   ) {
-    return this.appsService.findAll(pagination, name);
+    return this.appsService.findAll(pagination, name, gameId);
   }
 
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Получение приложения по ID' })
-  @ApiResponse({ status: 200, description: 'Приложение найдено' })
+  @ApiResponse({ status: 200, description: 'Приложение найдено', type: App })
   @ApiNotFoundResponse({ description: 'Приложение с указанным ID не найдено' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра информации о приложении',
@@ -129,6 +139,7 @@ export class AppsController {
   @ApiResponse({
     status: 200,
     description: 'Данные приложения успешно обновлены',
+    type: App,
   })
   @ApiNotFoundResponse({ description: 'Приложение с указанным ID не найдено' })
   @ApiForbiddenResponse({
@@ -147,7 +158,7 @@ export class AppsController {
   @Roles(UserRole.ADMIN)
   @ApiSecurity('apiKey')
   @ApiOperation({ summary: 'Удаление приложения' })
-  @ApiResponse({ status: 200, description: 'Приложение успешно удалено' })
+  @ApiResponse({ status: 200, description: 'Приложение успешно удалено', type: App })
   @ApiNotFoundResponse({ description: 'Приложение с указанным ID не найдено' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для удаления приложения',

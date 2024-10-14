@@ -6,6 +6,7 @@ import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 @Injectable()
 export class CombinedAuthGuard extends AuthGuard([
   'jwt',
+  'jwt-refresh',
   'telegram',
   'api-key',
 ]) {
@@ -18,6 +19,8 @@ export class CombinedAuthGuard extends AuthGuard([
       context.getHandler(),
       context.getClass(),
     ]);
+    const isLocalLoginRoute = context.switchToHttp().getRequest().url === '/api/auth/login';
+    if (isLocalLoginRoute) return true
     if (isPublic) return true;
     return super.canActivate(context);
   }

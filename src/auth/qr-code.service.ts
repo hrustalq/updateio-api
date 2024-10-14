@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 export class QrCodeService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async generateQRCode(): Promise<string> {
+  async generateQRCode(): Promise<{ code: string; expiresAt: Date }> {
     const code = uuidv4();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
 
@@ -18,7 +18,10 @@ export class QrCodeService {
       },
     });
 
-    return code;
+    return {
+      code,
+      expiresAt,
+    };
   }
 
   async confirmQRCode(userId: string, code: string): Promise<void> {

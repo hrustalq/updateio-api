@@ -126,7 +126,6 @@ export class AuthService {
       );
       if (tokenBlacklisted)
         throw new UnauthorizedException('Токен в чернм списке');
-      await this.blacklistToken(refreshToken, userId);
       return user;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -224,7 +223,7 @@ export class AuthService {
     return dbUser;
   }
 
-  async generateQRCode(): Promise<string> {
+  async generateQRCode(): Promise<{ code: string; expiresAt: Date }> {
     return this.qrCodeService.generateQRCode();
   }
 

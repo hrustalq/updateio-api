@@ -30,8 +30,11 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ConformCodeDto } from './dto/confirm-code.dto';
+import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
+import { GenerateQRCodeResponseDto } from './dto/generate-code-response.dto';
 
 @ApiTags('Аутентификация / авторизация')
+@ApiGlobalErrorResponses()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -149,10 +152,9 @@ export class AuthController {
   @Post('qr-code/generate')
   @Public()
   @ApiOperation({ summary: 'Генерация QR-кода для авторизации' })
-  @ApiResponse({ status: 201, description: 'QR-код успешно сгенерирован' })
+  @ApiResponse({ status: 201, description: 'QR-код успешно сгенерирован', type: GenerateQRCodeResponseDto })
   async generateQRCode() {
-    const code = await this.authService.generateQRCode();
-    return { code };
+    return this.authService.generateQRCode();
   }
 
   @Post('qr-code/confirm')
@@ -162,8 +164,8 @@ export class AuthController {
     description: 'Авторизация по QR-коду подтверждена',
   })
   @ApiBody({ type: () => ConformCodeDto, description: 'Код подтверждения' })
-  async confirmQRCode(@Body() code: string, @CurrentUser() user: User) {
-    await this.authService.confirmQRCode(user, code);
+  async confirmQRCode(@Body() dto: ConformCodeDto, @CurrentUser() user: User) {
+    await this.authService.confirmQRCode(user, dto.code);
     return { message: 'QR code confirmed successfully' };
   }
 

@@ -32,8 +32,11 @@ import {
 } from '../common/decorators/paginated.decorator';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { GetPatchNotesResponseDto } from './dto/get-patch-note-response.dto';
+import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
 
 @ApiTags('Патч-ноты')
+@ApiGlobalErrorResponses()
 @Controller('patch-notes')
 export class PatchNotesController {
   constructor(private readonly patchNotesService: PatchNotesService) {}
@@ -62,13 +65,7 @@ export class PatchNotesController {
   @Get()
   @Public()
   @ApiOperation({ summary: 'Получение списка патч-нотов' })
-  @ApiQuery({ name: 'page', required: false, description: 'Номер страницы' })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Количество элементов на странице',
-  })
-  @ApiResponse({ status: 200, description: 'Список патч-нотов получен' })
+  @ApiResponse({ status: 200, description: 'Список патч-нотов получен', type: GetPatchNotesResponseDto })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра списка патч-нотов',
   })

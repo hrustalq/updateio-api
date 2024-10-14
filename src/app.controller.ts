@@ -18,9 +18,11 @@ import fs from 'fs';
 import { join } from 'path';
 import { Response } from 'express';
 import { Public } from './common/decorators/public.decorator';
+import { ApiGlobalErrorResponses } from './common/decorators/error-response.decorator';
 
 @ApiTags('Сервисные данные приложения')
 @ApiSecurity('apiKey')
+@ApiGlobalErrorResponses()
 @Controller('app')
 export class AppController {
   constructor() {}

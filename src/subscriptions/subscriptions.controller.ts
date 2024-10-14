@@ -38,8 +38,10 @@ import { CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { GetSubscriptionsResponseDto } from './dto/get-subscriptions-response.dto';
 import { GetGamesResponseDto } from '../games/dto/get-games-reponse.dto';
+import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
 
 @ApiTags('Подписки')
+@ApiGlobalErrorResponses()
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(

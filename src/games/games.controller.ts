@@ -26,6 +26,7 @@ import {
   ApiTags,
   ApiConsumes,
   ApiSecurity,
+  ApiBody
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
@@ -36,8 +37,12 @@ import {
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { GetGamesResponseDto } from './dto/get-games-reponse.dto';
+import { Game } from './entities/game.entity';
+import { type File } from 'src/common/types/formdata-file';
+import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
 
 @ApiTags('Игры')
+@ApiGlobalErrorResponses()
 @Controller('games')
 export class GamesController {
   constructor(private readonly gamesService: GamesService) {}
@@ -59,6 +64,7 @@ export class GamesController {
   })
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ description: "Данные для создания игры", type: CreateGameDto })
   create(
     @Body() createGameDto: CreateGameDto,
     @UploadedFile() image: Express.Multer.File,
@@ -108,7 +114,7 @@ export class GamesController {
   @Get(':id')
   @Public()
   @ApiOperation({ summary: 'Получение игры по ID' })
-  @ApiResponse({ status: 200, description: 'Игра найдена' })
+  @ApiResponse({ status: 200, description: 'Игра найдена', type: Game })
   @ApiNotFoundResponse({ description: 'Игра с указанным ID не найдена' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра информации об игре',
@@ -135,6 +141,7 @@ export class GamesController {
   })
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
+  @ApiBody({ description: "Данные для обновления игры", type: UpdateGameDto })
   update(
     @Param('id') id: string,
     @Body() updateGameDto: UpdateGameDto,

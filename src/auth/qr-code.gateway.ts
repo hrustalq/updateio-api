@@ -40,8 +40,6 @@ export class QrCodeGateway {
   }
 
   async sendQrCodeStatusUpdate(qrCode: string, status: string) {
-    console.log({ qrCode });
-    console.log({ status });
     this.server.to(qrCode).emit('qrCodeStatus', { qrCode, status });
   }
 }

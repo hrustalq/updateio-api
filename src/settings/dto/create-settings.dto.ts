@@ -16,6 +16,6 @@ export class CreateSettingsDto implements Omit<Settings, 'id'> {
   @ApiProperty({ description: 'Название сервиса, вызывающего обновление' })
   executorName: string;
 
-  @ApiProperty({ description: 'Команда для вызова обновления' })
-  updateCommand: string | null;
+  @ApiProperty({ description: 'Команда для вызова обновления', type: 'string', required: true })
+  updateCommand: string;
 }

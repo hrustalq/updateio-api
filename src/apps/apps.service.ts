@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -22,6 +23,13 @@ export class AppsService {
   ) {}
 
   async create(createAppDto: CreateAppDto, image?: Express.Multer.File) {
+    const exists = await this.prismaService.app.findUnique({
+      where: {
+        name: createAppDto.name
+      }
+    });
+    if (exists) throw new ConflictException("Игра с таким названием уже существует")
+
     let imageUrl: string | undefined;
 
     if (image) {
@@ -40,13 +48,23 @@ export class AppsService {
     return app;
   }
 
-  async findAll(pagination: PaginationParamsDto, name?: string) {
+  async findAll(pagination: PaginationParamsDto, name?: string, gameId?: string) {
     const skip = (pagination.page - 1) * pagination.limit;
 
     try {
-      const where: Prisma.AppWhereInput = name
-        ? { name: { contains: name, mode: Prisma.QueryMode.insensitive } }
-        : {};
+      let where: Prisma.AppWhereInput = {};
+
+      if (name) {
+        where.name = { contains: name, mode: Prisma.QueryMode.insensitive };
+      }
+
+      if (gameId) {
+        where.games = {
+          some: {
+            gameId: gameId,
+          },
+        };
+      }
 
       const result = await this.prismaService.app.findMany({
         where,

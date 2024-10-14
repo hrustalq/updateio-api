@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -18,6 +18,7 @@ import { HttpClientModule } from './http-client/http-client.module';
 import { CombinedAuthGuard } from './auth/guards/combined-auth.guard';
 import { SettingsModule } from './settings/settings.module';
 import { AppController } from './app.controller';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -67,6 +68,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_GUARD,
       useClass: CombinedAuthGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
     {
       provide: APP_INTERCEPTOR,

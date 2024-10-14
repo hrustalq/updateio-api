@@ -7,6 +7,8 @@ import {
   IsArray,
 } from 'class-validator';
 
+type File = Express.Multer.File;
+
 export class CreateGameDto {
   @ApiProperty({
     description: 'Название игры',
