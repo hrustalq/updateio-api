@@ -8,6 +8,7 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AppsService } from './apps.service';
@@ -26,6 +27,7 @@ import {
   ApiConsumes,
   ApiBody,
   ApiSecurity,
+  ApiQuery,
 } from '@nestjs/swagger';
 import {
   PaginationQuery,
@@ -76,8 +78,17 @@ export class AppsController {
     description: 'Недостаточно прав для просмотра списка приложений',
   })
   @PaginatedRequest()
-  findAll(@PaginationQuery() pagination: PaginationParamsDto) {
-    return this.appsService.findAll(pagination);
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Фильтр по имени приложения',
+  })
+  findAll(
+    @PaginationQuery() pagination: PaginationParamsDto,
+    @Query('name') name?: string,
+  ) {
+    return this.appsService.findAll(pagination, name);
   }
 
   @Get(':id')

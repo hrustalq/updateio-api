@@ -9,7 +9,7 @@ import { UpdateAppDto } from './dto/update-app.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { PaginatedResult } from '../common/utils/paginated';
-import { App } from '@prisma/client';
+import { App, Prisma } from '@prisma/client';
 import { S3Service } from '../s3/s3.service';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
@@ -40,22 +40,28 @@ export class AppsService {
     return app;
   }
 
-  async findAll(pagination: PaginationParamsDto) {
-    const cacheKey = `apps_page_${pagination.page}_limit_${pagination.limit}`;
-    const cachedResult =
-      await this.cacheManager.get<PaginatedResult<App>>(cacheKey);
+  async findAll(pagination: PaginationParamsDto, name?: string) {
+    const skip = (pagination.page - 1) * pagination.limit;
+    const cacheKey = `apps_page_${pagination.page}_limit_${pagination.limit}_name_${name || 'all'}`;
 
+    const cachedResult = await this.cacheManager.get(cacheKey);
     if (cachedResult) {
       return cachedResult;
     }
 
-    const skip = (pagination.page - 1) * pagination.limit;
     try {
+      const where: Prisma.AppWhereInput = name
+        ? { name: { contains: name, mode: Prisma.QueryMode.insensitive } }
+        : {};
+
       const result = await this.prismaService.app.findMany({
+        where,
         take: pagination.limit,
         skip,
       });
-      const count = await this.prismaService.app.count();
+
+      const count = await this.prismaService.app.count({ where });
+
       const paginatedResult = new PaginatedResult<App>(
         result,
         pagination.page,
@@ -63,9 +69,7 @@ export class AppsService {
         count,
       );
 
-      // Cache the result for 5 minutes (300 seconds)
-      this.cacheManager.set(cacheKey, paginatedResult, 1000 * 60 * 5);
-
+      await this.cacheManager.set(cacheKey, paginatedResult, 60 * 5); // Cache for 5 minutes
       return paginatedResult;
     } catch (error) {
       console.error(error);
