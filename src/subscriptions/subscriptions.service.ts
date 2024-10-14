@@ -11,7 +11,7 @@ import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { PaginatedResult } from '../common/utils/paginated';
-import { User, UserRole } from '@prisma/client';
+import { User, UserRole, Prisma } from '@prisma/client';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { SubscriptionResponseDto } from './dto/subscription-response.dto';
 import { GameResponseDto } from './dto/game-response.dto';
@@ -25,38 +25,78 @@ export class SubscriptionsService {
 
   async getGames(
     pagination: PaginationParamsDto,
+    user: User,
     appId?: string,
   ): Promise<PaginatedResult<GameResponseDto>> {
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
 
-    const whereClause = appId
-      ? {
-          appsWithGame: {
-            some: {
-              appId: appId,
+    const whereClause: Prisma.GameWhereInput = {
+      appsWithGame: {
+        some: {
+          ...(appId && { appId }),
+          app: {
+            userSubscriptions: {
+              some: {
+                userId: user.id,
+              },
             },
           },
-        }
-      : {};
-
-    const [games, totalCount] = await Promise.all([
-      this.prismaService.game.findMany({
-        where: whereClause,
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          name: true,
-          image: true,
         },
-      }),
-      this.prismaService.game.count({
-        where: whereClause,
-      }),
-    ]);
+      },
+    };
 
-    return new PaginatedResult<GameResponseDto>(games, page, limit, totalCount);
+    try {
+      const [games, totalCount] = await Promise.all([
+        this.prismaService.game.findMany({
+          where: whereClause,
+          skip,
+          take: limit,
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            version: true,
+            appsWithGame: {
+              select: {
+                app: {
+                  select: {
+                    id: true,
+                    name: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        this.prismaService.game.count({
+          where: whereClause,
+        }),
+      ]);
+
+      const formattedGames: GameResponseDto[] = games.map((game) => ({
+        id: game.id,
+        name: game.name,
+        image: game.image,
+        version: game.version,
+        apps: game.appsWithGame.map((awg) => ({
+          id: awg.app.id,
+          name: awg.app.name,
+          image: awg.app.image,
+        })),
+      }));
+
+      return new PaginatedResult<GameResponseDto>(
+        formattedGames,
+        page,
+        limit,
+        totalCount,
+      );
+    } catch (error) {
+      console.error('Error fetching games:', error);
+      throw new InternalServerErrorException('Ошибка при получении списка игр');
+    }
   }
 
   async create(
@@ -65,7 +105,6 @@ export class SubscriptionsService {
   ): Promise<SubscriptionResponseDto> {
     const { gameId, appId, isSubscribed } = createSubscriptionDto;
 
-    // Проверяем существование игры и приложения
     const [game, app] = await Promise.all([
       this.prismaService.game.findUnique({ where: { id: gameId } }),
       this.prismaService.app.findUnique({ where: { id: appId } }),
@@ -75,7 +114,6 @@ export class SubscriptionsService {
       throw new BadRequestException('Неверный ID игры или приложения');
     }
 
-    // Проверяем, существует ли уже подписка для этого пользователя, игры и приложения
     const existingSubscription =
       await this.prismaService.userGameSubscription.findUnique({
         where: {
@@ -118,22 +156,7 @@ export class SubscriptionsService {
         isSubscribed: subscription.isSubscribed,
       });
 
-      const responseDto: SubscriptionResponseDto = {
-        id: subscription.id,
-        isSubscribed: subscription.isSubscribed,
-        app: {
-          id: subscription.app.id,
-          name: subscription.app.name,
-          image: subscription.app.image,
-        },
-        game: {
-          id: subscription.game.id,
-          name: subscription.game.name,
-          image: subscription.game.image,
-        },
-      };
-
-      return responseDto;
+      return this.mapToSubscriptionResponseDto(subscription);
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException('Ошибка при создании подписки');
@@ -153,20 +176,8 @@ export class SubscriptionsService {
         skip,
         take: limit,
         include: {
-          game: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
-          app: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-            },
-          },
+          game: true,
+          app: true,
         },
       }),
       this.prismaService.userGameSubscription.count({
@@ -174,12 +185,9 @@ export class SubscriptionsService {
       }),
     ]);
 
-    const formattedSubscriptions = subscriptions.map((sub) => ({
-      id: sub.id,
-      isSubscribed: sub.isSubscribed,
-      game: sub.game,
-      app: sub.app,
-    }));
+    const formattedSubscriptions = subscriptions.map(
+      this.mapToSubscriptionResponseDto,
+    );
 
     return new PaginatedResult<SubscriptionResponseDto>(
       formattedSubscriptions,
@@ -189,7 +197,11 @@ export class SubscriptionsService {
     );
   }
 
-  async findOne(gameId: string, appId: string, user: User) {
+  async findOne(
+    gameId: string,
+    appId: string,
+    user: User,
+  ): Promise<SubscriptionResponseDto> {
     const subscription =
       await this.prismaService.userGameSubscription.findUnique({
         where: {
@@ -209,14 +221,14 @@ export class SubscriptionsService {
       throw new NotFoundException('Подписка не найдена');
     }
 
-    return subscription;
+    return this.mapToSubscriptionResponseDto(subscription);
   }
 
   async update(
     id: string,
     user: User,
     updateSubscriptionDto: UpdateSubscriptionDto,
-  ) {
+  ): Promise<SubscriptionResponseDto> {
     await this.checkUserPermission(id, user);
 
     try {
@@ -243,14 +255,14 @@ export class SubscriptionsService {
         isSubscribed: updatedSubscription.isSubscribed,
       });
 
-      return updatedSubscription;
+      return this.mapToSubscriptionResponseDto(updatedSubscription);
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException('Ошибка при обновлении подписки');
     }
   }
 
-  async remove(id: string, user: User) {
+  async remove(id: string, user: User): Promise<SubscriptionResponseDto> {
     await this.checkUserPermission(id, user);
 
     try {
@@ -273,14 +285,14 @@ export class SubscriptionsService {
         appName: removedSubscription.app.name,
       });
 
-      return removedSubscription;
+      return this.mapToSubscriptionResponseDto(removedSubscription);
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException('Ошибка при удалении подписки');
     }
   }
 
-  async checkUserPermission(subscriptionId: string, user: User) {
+  private async checkUserPermission(subscriptionId: string, user: User) {
     if (user.role === UserRole.ADMIN) {
       return true;
     }
@@ -303,6 +315,26 @@ export class SubscriptionsService {
     }
 
     return true;
+  }
+
+  private mapToSubscriptionResponseDto(
+    subscription: any,
+  ): SubscriptionResponseDto {
+    return {
+      id: subscription.id,
+      isSubscribed: subscription.isSubscribed,
+      app: {
+        id: subscription.app.id,
+        name: subscription.app.name,
+        image: subscription.app.image,
+      },
+      game: {
+        version: subscription.game.version,
+        id: subscription.game.id,
+        name: subscription.game.name,
+        image: subscription.game.image,
+      },
+    };
   }
 
   private async publishSubscriptionCreated(data: {

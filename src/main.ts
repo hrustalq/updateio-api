@@ -54,4 +54,5 @@ async function bootstrap() {
     console.log(`[App] Server is running on port ${appConfig.port}`);
   });
 }
+
 bootstrap();

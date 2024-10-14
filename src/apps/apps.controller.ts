@@ -35,6 +35,7 @@ import {
 } from '../common/decorators/paginated.decorator';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { AppResponseDto } from './dto/app-response.dto';
 
 @ApiTags('Приложения')
 @Controller('apps')
@@ -73,7 +74,11 @@ export class AppsController {
   @Get()
   @Public()
   @ApiOperation({ summary: 'Получение списка приложений' })
-  @ApiResponse({ status: 200, description: 'Список приложений получен' })
+  @ApiResponse({
+    status: 200,
+    description: 'Список приложений получен',
+    type: AppResponseDto,
+  })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра списка приложений',
   })

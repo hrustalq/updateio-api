@@ -60,3 +60,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Ubuntu misc files
 nohup.out
+
+# local ssl certificates
+*.cert
+*.key

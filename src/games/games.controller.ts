@@ -14,7 +14,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { GamesService } from './games.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
-import { FindGamesDto } from './dto/find-games.dto';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -36,6 +35,7 @@ import {
 } from '../common/decorators/paginated.decorator';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { GetGamesResponseDto } from './dto/get-games-reponse.dto';
 
 @ApiTags('Игры')
 @Controller('games')
@@ -67,58 +67,42 @@ export class GamesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Получение списка игр' })
-  @ApiQuery({ name: 'page', required: false, description: 'Номер страницы' })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Количество элементов на странице',
+  @Public()
+  @ApiOperation({ summary: 'Получение списка игр или поиск игр по названию' })
+  @ApiResponse({
+    status: 200,
+    description: 'Список игр получен',
+    type: GetGamesResponseDto,
   })
-  @ApiQuery({
-    name: 'appId',
-    required: false,
-    description: 'ID приложения для фильтрации игр',
-  })
-  @ApiResponse({ status: 200, description: 'Список игр получен' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра списка игр',
   })
   @ApiInternalServerErrorResponse({
     description: 'Ошибка сервера при получении списка игр',
   })
-  @Public()
-  findAll(@Query() findGameDto: FindGamesDto) {
-    return this.gamesService.findAll(findGameDto);
-  }
-
-  @Get('search')
-  @Public()
-  @ApiOperation({ summary: 'Поиск игры по названию' })
+  @PaginatedRequest()
+  @ApiQuery({
+    name: 'appId',
+    required: false,
+    description: 'ID приложения для фильтрации игр',
+  })
+  @ApiQuery({
+    name: 'appName',
+    required: false,
+    description: 'Название приложения для фильтрации игр',
+  })
   @ApiQuery({
     name: 'name',
-    required: true,
+    required: false,
     description: 'Название игры для поиска',
   })
-  @ApiQuery({ name: 'page', required: false, description: 'Номер страницы' })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Количество элементов на странице',
-  })
-  @ApiResponse({ status: 200, description: 'Игры найдены' })
-  @ApiNotFoundResponse({ description: 'Игры с указанным названием не найдены' })
-  @ApiForbiddenResponse({
-    description: 'Недостаточно прав для поиска игр',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Ошибка сервера при поиске игр',
-  })
-  @PaginatedRequest()
-  searchByName(
-    @Query('name') name: string,
+  findAll(
     @PaginationQuery() pagination: PaginationParamsDto,
+    @Query('appId') appId?: string,
+    @Query('appName') appName?: string,
+    @Query('name') name?: string,
   ) {
-    return this.gamesService.searchByName(name, pagination);
+    return this.gamesService.findAll(pagination, appId, appName, name);
   }
 
   @Get(':id')

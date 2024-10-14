@@ -24,22 +24,14 @@ export class Game implements GameModel {
   name: string;
 
   @ApiProperty({
-    description: 'ID приложения за которым привязана игра',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-    required: false,
-  })
-  @IsUUID()
-  @IsOptional()
-  appId: string | null;
-
-  @ApiProperty({
-    default: 'URL Изображения',
-    example: 'http://example.com/image.webp',
-    required: false,
+    example: 'https://example.com/image.jpg',
+    description: 'Ссылка на изображение',
+    nullable: true,
+    type: 'string',
   })
   @IsString()
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   image: string | null;
 
   @ApiProperty({ description: 'Версия игры', example: 2.0, required: false })

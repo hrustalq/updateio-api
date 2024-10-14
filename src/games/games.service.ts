@@ -9,8 +9,7 @@ import { UpdateGameDto } from './dto/update-game.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { PaginatedResult } from '../common/utils/paginated';
-import { Game } from '@prisma/client';
-import { FindGamesDto } from './dto/find-games.dto';
+import { Game, Prisma } from '@prisma/client';
 import { S3Service } from '../s3/s3.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
@@ -54,36 +53,74 @@ export class GamesService {
     });
   }
 
-  async findAll(findGamesDto: FindGamesDto) {
-    const { page, limit, appId } = findGamesDto;
+  async findAll(
+    pagination: PaginationParamsDto,
+    appId?: string,
+    appName?: string,
+    name?: string,
+  ) {
+    const { page, limit } = pagination;
     const skip = (page - 1) * limit;
     try {
+      const whereClause: Prisma.GameWhereInput = {
+        AND: [
+          {
+            appsWithGame: {
+              some: {
+                ...(appId && { appId }),
+                ...(appName && {
+                  app: {
+                    name: {
+                      contains: appName,
+                      mode: Prisma.QueryMode.insensitive,
+                    },
+                  },
+                }),
+              },
+            },
+          },
+          ...(name
+            ? [
+                {
+                  name: {
+                    contains: name,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+              ]
+            : []),
+        ],
+      };
+
       const [result, count] = await Promise.all([
         this.prismaService.game.findMany({
-          where: {
-            appsWithGame: {
-              some: {
-                appId: appId,
-              },
-            },
-          },
+          where: whereClause,
           take: limit,
           skip,
-        }),
-        this.prismaService.game.count({
-          where: {
+          include: {
             appsWithGame: {
-              some: {
-                appId: appId,
+              include: {
+                app: true,
               },
             },
           },
         }),
+        this.prismaService.game.count({
+          where: whereClause,
+        }),
       ]);
+
+      if (result.length === 0 && name) {
+        throw new NotFoundException('Игры с указанным названием не найдены');
+      }
+
       return new PaginatedResult<Game>(result, page, limit, count);
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       console.error(error);
-      throw new InternalServerErrorException();
+      throw new InternalServerErrorException('Ошибка при поиске игр');
     }
   }
 
@@ -153,55 +190,5 @@ export class GamesService {
     return this.prismaService.game.delete({
       where: { id },
     });
-  }
-
-  async searchByName(name: string, pagination: PaginationParamsDto) {
-    const skip = (pagination.page - 1) * pagination.limit;
-    try {
-      const [games, totalCount] = await Promise.all([
-        this.prismaService.game.findMany({
-          where: {
-            name: {
-              contains: name,
-              mode: 'insensitive',
-            },
-          },
-          include: {
-            appsWithGame: {
-              include: {
-                app: true,
-              },
-            },
-          },
-          take: pagination.limit,
-          skip,
-        }),
-        this.prismaService.game.count({
-          where: {
-            name: {
-              contains: name,
-              mode: 'insensitive',
-            },
-          },
-        }),
-      ]);
-
-      if (games.length === 0) {
-        throw new NotFoundException('Игры с указанным названием не найдены');
-      }
-
-      return new PaginatedResult<Game>(
-        games,
-        pagination.page,
-        pagination.limit,
-        totalCount,
-      );
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      console.error(error);
-      throw new InternalServerErrorException('Ошибка при поиске игр');
-    }
   }
 }

@@ -6,7 +6,6 @@ import {
   HttpStatus,
   HttpCode,
   Body,
-  Param,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -30,7 +29,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ConformCodeDto } from "./dto/confirm-code.dto"
+import { ConformCodeDto } from './dto/confirm-code.dto';
 
 @ApiTags('Аутентификация / авторизация')
 @Controller('auth')
@@ -162,11 +161,8 @@ export class AuthController {
     status: 200,
     description: 'Авторизация по QR-коду подтверждена',
   })
-  @ApiBody({ type: () => ConformCodeDto, description: "Код подтверждения" })
-  async confirmQRCode(
-    @Body() code: string,
-    @CurrentUser() user: User,
-  ) {
+  @ApiBody({ type: () => ConformCodeDto, description: 'Код подтверждения' })
+  async confirmQRCode(@Body() code: string, @CurrentUser() user: User) {
     await this.authService.confirmQRCode(user, code);
     return { message: 'QR code confirmed successfully' };
   }

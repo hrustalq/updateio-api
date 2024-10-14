@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { App as AppModel } from '@prisma/client';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+} from 'class-validator';
 
 export class App implements AppModel {
   @ApiProperty({
@@ -15,4 +21,15 @@ export class App implements AppModel {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiProperty({
+    example: 'https://example.com/image.jpg',
+    description: 'Ссылка на изображение',
+    nullable: true,
+    type: 'string',
+  })
+  @IsString()
+  @IsOptional()
+  @IsUrl()
+  image: string | null;
 }

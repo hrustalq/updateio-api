@@ -36,8 +36,8 @@ import { UserCacheKey } from '../common/decorators/user-cache-key.decorator';
 import { UserCacheInterceptor } from '../common/interceptors/user-cache.interceptor';
 import { CACHE_MANAGER, CacheTTL } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import { PaginatedResult } from '../common/utils/paginated';
-import { GameResponseDto } from './dto/game-response.dto';
+import { GetSubscriptionsResponseDto } from './dto/get-subscriptions-response.dto';
+import { GetGamesResponseDto } from '../games/dto/get-games-reponse.dto';
 
 @ApiTags('Подписки')
 @Controller('subscriptions')
@@ -53,14 +53,15 @@ export class SubscriptionsController {
   @ApiResponse({
     status: 200,
     description: 'Список игр получен',
-    type: PaginatedResult<GameResponseDto>,
+    type: GetGamesResponseDto,
   })
   @PaginatedRequest()
   async getGames(
     @PaginationQuery() pagination: PaginationParamsDto,
+    @CurrentUser() user: User,
     @Query('appId') appId?: string,
-  ): Promise<PaginatedResult<GameResponseDto>> {
-    return this.subscriptionsService.getGames(pagination, appId);
+  ) {
+    return this.subscriptionsService.getGames(pagination, user, appId);
   }
 
   @Post()
@@ -81,7 +82,7 @@ export class SubscriptionsController {
   async create(
     @Body() createSubscriptionDto: CreateSubscriptionDto,
     @CurrentUser() user: User,
-  ): Promise<SubscriptionResponseDto> {
+  ) {
     const result = await this.subscriptionsService.create(
       createSubscriptionDto,
       user,
@@ -98,7 +99,7 @@ export class SubscriptionsController {
   @ApiResponse({
     status: 200,
     description: 'Список подписок получен',
-    type: PaginatedResult<SubscriptionResponseDto>,
+    type: GetSubscriptionsResponseDto,
   })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра подписок',
@@ -110,7 +111,7 @@ export class SubscriptionsController {
   findAll(
     @PaginationQuery() pagination: PaginationParamsDto,
     @CurrentUser() user: User,
-  ): Promise<PaginatedResult<SubscriptionResponseDto>> {
+  ) {
     return this.subscriptionsService.findAll(pagination, user);
   }
 
@@ -118,7 +119,11 @@ export class SubscriptionsController {
   @UseInterceptors(UserCacheInterceptor)
   @UserCacheKey('user_subscription')
   @ApiOperation({ summary: 'Получение подписки по ID игры и ID приложения' })
-  @ApiResponse({ status: 200, description: 'Подписка найдена' })
+  @ApiResponse({
+    status: 200,
+    description: 'Подписка найдена',
+    type: SubscriptionResponseDto,
+  })
   @ApiNotFoundResponse({ description: 'Подписка не найдена' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра информации о подписке',
@@ -140,6 +145,7 @@ export class SubscriptionsController {
   @ApiResponse({
     status: 200,
     description: 'Данные подписки успешно обновлены',
+    type: SubscriptionResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Подписка не найдена' })
   @ApiForbiddenResponse({
@@ -167,7 +173,11 @@ export class SubscriptionsController {
   @Delete(':id')
   @ApiSecurity('apiKey')
   @ApiOperation({ summary: 'Удаление подписки' })
-  @ApiResponse({ status: 200, description: 'Подписка успешно удалена' })
+  @ApiResponse({
+    status: 200,
+    description: 'Подписка успешно удалена',
+    type: SubscriptionResponseDto,
+  })
   @ApiNotFoundResponse({ description: 'Подписка не найдена' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для удаления подписки',

@@ -42,12 +42,6 @@ export class AppsService {
 
   async findAll(pagination: PaginationParamsDto, name?: string) {
     const skip = (pagination.page - 1) * pagination.limit;
-    const cacheKey = `apps_page_${pagination.page}_limit_${pagination.limit}_name_${name || 'all'}`;
-
-    const cachedResult = await this.cacheManager.get(cacheKey);
-    if (cachedResult) {
-      return cachedResult;
-    }
 
     try {
       const where: Prisma.AppWhereInput = name
@@ -69,7 +63,6 @@ export class AppsService {
         count,
       );
 
-      await this.cacheManager.set(cacheKey, paginatedResult, 60 * 5); // Cache for 5 minutes
       return paginatedResult;
     } catch (error) {
       console.error(error);
