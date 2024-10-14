@@ -30,6 +30,7 @@ import { LoginDto } from './dto/login.dto';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { RegisterDto } from './dto/register.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { ConformCodeDto } from "./dto/confirm-code.dto"
 
 @ApiTags('Аутентификация / авторизация')
 @Controller('auth')
@@ -155,13 +156,17 @@ export class AuthController {
     return { code };
   }
 
-  @Post('qr-code/confirm/:code')
+  @Post('qr-code/confirm')
   @ApiOperation({ summary: 'Подтверждение авторизации по QR-коду' })
   @ApiResponse({
     status: 200,
     description: 'Авторизация по QR-коду подтверждена',
   })
-  async confirmQRCode(@CurrentUser() user: User, @Param('code') code: string) {
+  @ApiBody({ type: () => ConformCodeDto, description: "Код подтверждения" })
+  async confirmQRCode(
+    @Body() code: string,
+    @CurrentUser() user: User,
+  ) {
     await this.authService.confirmQRCode(user, code);
     return { message: 'QR code confirmed successfully' };
   }

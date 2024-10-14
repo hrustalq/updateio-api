@@ -25,13 +25,6 @@ export class TelegramStrategy extends PassportStrategy(Strategy, 'telegram') {
 
     const initDataRaw = authHeader.slice(4);
 
-    try {
-      const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
-      validate(initDataRaw, botToken);
-    } catch (error) {
-      throw new UnauthorizedException('Invalid Telegram Web App Data');
-    }
-
     const initData = parse(initDataRaw);
     if (!initData?.user?.id) {
       throw new UnauthorizedException('Invalid Credentials');
@@ -43,6 +36,7 @@ export class TelegramStrategy extends PassportStrategy(Strategy, 'telegram') {
         this.configService.getOrThrow<string>('TELEGRAM_BOT_TOKEN'),
       );
     } catch (error) {
+      console.error(error);
       throw new UnauthorizedException('Invalid Credentials');
     }
     const user = await this.authService.validateInitData(initData);

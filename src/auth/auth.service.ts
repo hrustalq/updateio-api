@@ -203,11 +203,12 @@ export class AuthService {
   async validateInitData(initData: InitData): Promise<User> {
     const { user } = initData;
 
-    let dbUser = await this.usersService.findById(user.id.toString());
+    let dbUser = await this.usersService.findById(user.id.toString()).catch(() => null)
     if (!dbUser) {
       // If the user doesn't exist, create a new one
       dbUser = await this.usersService.create({
         ...user,
+        password:  this.generateRandomPassword(),
         id: user.id.toString(),
       });
     } else {

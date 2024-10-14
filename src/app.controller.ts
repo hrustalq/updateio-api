@@ -25,25 +25,23 @@ import { Public } from './common/decorators/public.decorator';
 export class AppController {
   constructor() {}
 
-  @Get('swagger')
+  @Get('swagger.json')
   @Public()
-  @ApiOperation({ summary: 'Получение json схемы апи' })
+  @ApiOperation({ summary: 'Получение json файла схемы апи' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: () => File,
-    description: 'Схема успешно получена',
-  })
-  @ApiForbiddenResponse({
-    description: 'Недостаточно прав для запроса настроек',
+    description: 'Файл схемы успешно получен',
   })
   @ApiNotFoundResponse({
-    description: 'Схема не найдена',
+    description: 'Файл схемы не найден',
   })
   @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера' })
-  async getSettings(@Res() res: Response) {
-    const filePath = join(__dirname, '..', 'swagger.json');
-    if (!fs.existsSync(filePath))
-      throw new NotFoundException('Схема не найдена');
+  async getSwaggerJson(@Res() res: Response) {
+    const filePath = join(process.cwd(), 'swagger.json');
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Файл схемы не найден');
+    }
     return res.sendFile(filePath);
   }
 

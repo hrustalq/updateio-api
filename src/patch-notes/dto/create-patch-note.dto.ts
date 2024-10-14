@@ -51,7 +51,7 @@ export class CreatePatchNoteDto {
 
   @ApiProperty({
     description: 'ID приложения, к которому относится игра',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: 'с4fghor1d2fgnf',
   })
   @IsNotEmpty()
   @IsString()
