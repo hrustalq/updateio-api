@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AmqpConnection, RabbitSubscribe } from '@golevelup/nestjs-rabbitmq';
@@ -25,11 +26,45 @@ export class UpdatesService {
   ): Promise<UpdateRequest> {
     const { gameId, appId } = createUpdateRequestDto;
 
+    await this.prismaService.game
+      .findUnique({
+        where: {
+          id: gameId,
+        },
+      })
+      .then((v) => {
+        if (!v) throw new BadRequestException('Игры с таким ID не существует');
+        return v;
+      });
+    await this.prismaService.app
+      .findUnique({
+        where: {
+          id: appId,
+        },
+      })
+      .then((v) => {
+        if (!v)
+          throw new BadRequestException('Приложения с таким ID не существует');
+        return v;
+      });
+
     const updateRequest = await this.prismaService.updateRequest.create({
       data: {
-        gameId,
-        appId,
-        userId,
+        game: {
+          connect: {
+            id: gameId,
+          },
+        },
+        app: {
+          connect: {
+            id: appId,
+          },
+        },
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
         status: 'PENDING',
       },
     });
@@ -136,8 +171,7 @@ export class UpdatesService {
     source: 'API' | 'IPC';
     updateCommand: string;
   }) {
-    const { id, gameId, appId, userId, externalId, source, updateCommand } =
-      msg;
+    const { id, gameId, appId, userId, source, updateCommand } = msg;
 
     let updateRequest: UpdateRequest;
 
@@ -159,7 +193,7 @@ export class UpdatesService {
     }
 
     // Публикация статуса обновления
-    await this.publishUpdateStatus(updateRequest);
+    await this.publishUpdateStatus({ ...updateRequest, updateCommand });
   }
 
   private async handleLocalUpdate(
@@ -187,25 +221,19 @@ export class UpdatesService {
       },
     });
 
-    // Здесь можно добавить логику для выполнения обновления
-    // Например, вызов метода для выполнения команды обновления
-
-    // Обновление статуса после выполнения обновления
-    const updatedRequest = await this.prismaService.updateRequest.update({
-      where: { id },
-      data: { status: 'COMPLETED' },
-    });
-
-    return updatedRequest;
+    return updateRequest;
   }
 
-  private async publishUpdateStatus(updateRequest: UpdateRequest) {
+  private async publishUpdateStatus(
+    updateRequest: UpdateRequest & { updateCommand: string },
+  ) {
     await this.amqpConnection.publish('updates', 'update.status', {
       id: updateRequest.id,
       gameId: updateRequest.gameId,
       appId: updateRequest.appId,
       userId: updateRequest.userId,
       status: updateRequest.status,
+      updateCommand: updateRequest.updateCommand,
     });
   }
 

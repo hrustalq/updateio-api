@@ -1,6 +1,8 @@
 services:
   postgres:
     image: postgres:14
+    ports:
+      - "6379:6379"
     environment:
       POSTGRES_DB: default_db
       POSTGRES_USER: postgres
