@@ -1,0 +1,32 @@
+model UpdateRequest {
+  id        String   @id @default(cuid())
+  status    UpdateRequestStatus
+  
+  gameId    String
+  game      Game     @relation(fields: [gameId], references: [id])
+  
+  appId     String
+  app       App      @relation(fields: [appId], references: [id])
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  source    UpdateRequestSource @default(API)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("update_requests")
+}
+
+enum UpdateRequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum UpdateRequestSource {
+  IPC
+  API
+}

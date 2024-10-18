@@ -32,6 +32,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { ConformCodeDto } from './dto/confirm-code.dto';
 import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
 import { GenerateQRCodeResponseDto } from './dto/generate-code-response.dto';
+import { LoginWithCodeDto } from './dto/login-with-code.dto';
 
 @ApiTags('Аутентификация / авторизация')
 @ApiGlobalErrorResponses()
@@ -152,7 +153,11 @@ export class AuthController {
   @Post('qr-code/generate')
   @Public()
   @ApiOperation({ summary: 'Генерация QR-кода для авторизации' })
-  @ApiResponse({ status: 201, description: 'QR-код успешно сгенерирован', type: GenerateQRCodeResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'QR-код успешно сгенерирован',
+    type: GenerateQRCodeResponseDto,
+  })
   async generateQRCode() {
     return this.authService.generateQRCode();
   }
@@ -171,8 +176,13 @@ export class AuthController {
 
   @Post('qr-code/login')
   @Public()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Авторизация по QR-коду' })
-  @ApiResponse({ status: 200, description: 'Успешная авторизация по QR-коду' })
+  @ApiBody({
+    description: 'Данные для авторизации по qr колу',
+    type: LoginWithCodeDto,
+  })
+  @ApiResponse({ status: 201, description: 'Успешная авторизация по QR-коду' })
   async loginWithQRCode(
     @Body('code') code: string,
     @Res({ passthrough: true }) response: Response,

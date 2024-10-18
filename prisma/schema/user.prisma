@@ -23,6 +23,7 @@ model User {
 
   gameSubscriptions UserGameSubscription[]
   qrCodeSessions    QRCodeSession[]
+  updateRequests   UpdateRequest[]
 
   @@map("users")
 }

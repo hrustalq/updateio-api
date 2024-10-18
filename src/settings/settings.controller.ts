@@ -9,6 +9,8 @@ import {
   ApiSecurity,
   ApiTags,
   ApiQuery,
+  ApiBody,
+  ApiParam,
 } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
 import {
@@ -30,8 +32,17 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { Settings } from './entities/settings.entity';
 import { GetSettingsResponseDto } from './dto/get-settings-response.dto';
 import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
-import { PaginatedRequest, PaginationQuery } from 'src/common/decorators/paginated.decorator';
+import {
+  PaginatedRequest,
+  PaginationQuery,
+} from 'src/common/decorators/paginated.decorator';
 import { PaginationParamsDto } from 'src/common/dto/pagination.dto';
+import {
+  BadRequestResponseDto,
+  ForbiddenResponseDto,
+  InternalServerErrorResponseDto,
+  NotFoundResponseDto,
+} from 'src/common/dto/error-response.dto';
 
 @ApiTags('Настройки игр')
 @ApiSecurity('apiKey')
@@ -48,18 +59,25 @@ export class SettingsController {
     description: 'Настройки найдены и возвращены',
     type: GetSettingsResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Некорректные параметры запроса' })
+  @ApiBadRequestResponse({
+    description: 'Некорректные параметры запроса',
+    type: BadRequestResponseDto,
+  })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для запроса настроек',
+    type: ForbiddenResponseDto,
   })
-  @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера' })
+  @ApiInternalServerErrorResponse({
+    description: 'Внутренняя ошибка сервера',
+    type: InternalServerErrorResponseDto,
+  })
   @PaginatedRequest()
   @ApiQuery({ name: 'appId', required: true, type: String })
   @ApiQuery({ name: 'gameId', required: true, type: String })
   async getSettings(
     @Query('appId') appId: string,
     @Query('gameId') gameId: string,
-    @PaginationQuery() pagination: PaginationParamsDto
+    @PaginationQuery() pagination: PaginationParamsDto,
   ) {
     return this.settingsService.findSettings(pagination, { appId, gameId });
   }
@@ -96,7 +114,8 @@ export class SettingsController {
     description: 'Недостаточно прав для создания настроек',
   })
   @ApiConflictResponse({
-    description: 'Настройки с таким сочетанием игры и приложения уже существуют',
+    description:
+      'Настройки с таким сочетанием игры и приложения уже существуют',
   })
   @ApiBadRequestResponse({ description: 'Некорректные параметры запроса' })
   @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера' })
@@ -107,6 +126,10 @@ export class SettingsController {
   @Patch(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Изменение записи настроек' })
+  @ApiBody({
+    description: 'Входные данные для изменения записи настроек',
+    type: UpdateSettingsDto,
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Настройки успешно изменены',
@@ -114,12 +137,26 @@ export class SettingsController {
   })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для изменения настроек',
+    type: ForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
     description: 'Настроек с таким ID не существует',
+    type: NotFoundResponseDto,
   })
-  @ApiBadRequestResponse({ description: 'Некорректные параметры запроса' })
-  @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера' })
+  @ApiParam({
+    description: 'id',
+    name: 'ID Записи настроек',
+    example: '0048a383-3f58-4ce7-afa1-9a5d5c166c77',
+    type: 'string',
+  })
+  @ApiBadRequestResponse({
+    description: 'Некорректные параметры запроса',
+    type: BadRequestResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Внутренняя ошибка сервера',
+    type: InternalServerErrorResponseDto,
+  })
   async updateSettings(
     @Param('id') id: string,
     @Body() updateSettingsDto: UpdateSettingsDto,

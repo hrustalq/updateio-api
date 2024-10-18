@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PatchNote } from '../entities/patch-note.entity';
+import { UpdateRequest } from '../entities/update-request.entity';
 
-export class GetPatchNotesResponseDto {
-  @ApiProperty({ type: [PatchNote], description: 'Список игр' })
-  data: PatchNote[];
+export class GetUpdateRequestsResponseDto {
+  @ApiProperty({ type: [UpdateRequest], description: 'Список игр' })
+  data: UpdateRequest[];
 
   @ApiProperty({ example: 1, description: 'Текущий номер страницы' })
   page: number;

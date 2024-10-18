@@ -9,6 +9,7 @@ model Game {
   appsWithGame GameOnApp[]
   userSubscriptions UserGameSubscription[]
   settings Settings[]
+  updateRequests UpdateRequest[]
 
   @@map("games")
 }

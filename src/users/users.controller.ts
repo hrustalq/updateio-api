@@ -19,7 +19,6 @@ import {
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiSecurity,
   ApiTags,
@@ -35,7 +34,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { GetUsersResponseDto } from './dto/get-users-response.dto';
 import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
-import { ForbiddenResponseDto, InternalServerErrorResponseDto } from 'src/common/dto/error-response.dto';
+import {
+  ForbiddenResponseDto,
+  InternalServerErrorResponseDto,
+} from 'src/common/dto/error-response.dto';
 import { GetMeResponseDto } from './dto/get-me-response.dto';
 
 @ApiTags('Пользователи')
@@ -70,7 +72,11 @@ export class UsersController {
   @Get()
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Получение списка пользователей' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Пользователи найдены', type: GetUsersResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Пользователи найдены',
+    type: GetUsersResponseDto,
+  })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра списка пользователей',
   })
@@ -89,8 +95,14 @@ export class UsersController {
     description: 'Информация о пользователе получена',
     type: GetMeResponseDto,
   })
-  @ApiForbiddenResponse({ description: 'Пользователь не авторизован', type: ForbiddenResponseDto })
-  @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера', type: InternalServerErrorResponseDto })
+  @ApiForbiddenResponse({
+    description: 'Пользователь не авторизован',
+    type: ForbiddenResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Внутренняя ошибка сервера',
+    type: InternalServerErrorResponseDto,
+  })
   getCurrentUser(@CurrentUser() user: User) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, createdAt, updatedAt, ...userWithoutPassword } = user;

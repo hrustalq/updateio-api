@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class GenerateQRCodeResponseDto {
   @ApiProperty({ description: 'Код для авторизации', type: 'string' })
@@ -7,6 +7,9 @@ export class GenerateQRCodeResponseDto {
   @IsNotEmpty()
   code: string;
 
-  @ApiProperty({ description: 'Дата истечения действительности кода', type: 'string' })
+  @ApiProperty({
+    description: 'Дата истечения действительности кода',
+    type: 'string',
+  })
   expiresAt: Date;
 }

@@ -37,7 +37,7 @@ export class PatchNote implements PatchNoteModel {
     description: 'Версия обновления',
     example: '2.0.1',
     required: false,
-    type: 'string'
+    type: 'string',
   })
   @IsString()
   @IsOptional()

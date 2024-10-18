@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { PatchNotesService } from './patch-notes.service';
 import { CreatePatchNoteDto } from './dto/create-patch-note.dto';
@@ -19,10 +20,10 @@ import {
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiSecurity,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
@@ -34,6 +35,7 @@ import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { GetPatchNotesResponseDto } from './dto/get-patch-note-response.dto';
 import { ApiGlobalErrorResponses } from 'src/common/decorators/error-response.decorator';
+import { PatchNoteFilterDto } from './dto/patch-note-filter.dto';
 
 @ApiTags('Патч-ноты')
 @ApiGlobalErrorResponses()
@@ -65,7 +67,11 @@ export class PatchNotesController {
   @Get()
   @Public()
   @ApiOperation({ summary: 'Получение списка патч-нотов' })
-  @ApiResponse({ status: 200, description: 'Список патч-нотов получен', type: GetPatchNotesResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Список патч-нотов получен',
+    type: GetPatchNotesResponseDto,
+  })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для просмотра списка патч-нотов',
   })
@@ -73,8 +79,25 @@ export class PatchNotesController {
     description: 'Ошибка сервера при получении списка патч-нотов',
   })
   @PaginatedRequest()
-  findAll(@PaginationQuery() pagination: PaginationParamsDto) {
-    return this.patchNotesService.findAll(pagination);
+  @ApiQuery({
+    name: 'gameId',
+    required: false,
+    type: String,
+    description: 'ID игры для фильтрации',
+    example: '0dc3564a-4511-4b74-a070-61dc1d07ec12',
+  })
+  @ApiQuery({
+    name: 'appId',
+    required: false,
+    type: String,
+    description: 'ID приложения для фильтрации',
+    example: 'cm28mu2m70000h6fdo3czj3aa',
+  })
+  findAll(
+    @PaginationQuery() pagination: PaginationParamsDto,
+    @Query() filter: PatchNoteFilterDto,
+  ) {
+    return this.patchNotesService.findAll(pagination, filter);
   }
 
   @Get(':id')

@@ -8,7 +8,10 @@ export class GetUsersResponseDto {
   @ApiProperty({ example: 1, description: 'Текущая страница пагинации' })
   page: number;
 
-  @ApiProperty({ example: 10, description: 'Количество записей на одной странице' })
+  @ApiProperty({
+    example: 10,
+    description: 'Количество записей на одной странице',
+  })
   perPage: number;
 
   @ApiProperty({ example: 100, description: 'Общее количество записей' })

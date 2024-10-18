@@ -9,4 +9,5 @@ model App {
   patchNote PatchNote[]
   userSubscriptions UserGameSubscription[]
   settings Settings[]
+  updateRequests UpdateRequest[]
 }

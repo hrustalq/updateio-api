@@ -158,7 +158,11 @@ export class AppsController {
   @Roles(UserRole.ADMIN)
   @ApiSecurity('apiKey')
   @ApiOperation({ summary: 'Удаление приложения' })
-  @ApiResponse({ status: 200, description: 'Приложение успешно удалено', type: App })
+  @ApiResponse({
+    status: 200,
+    description: 'Приложение успешно удалено',
+    type: App,
+  })
   @ApiNotFoundResponse({ description: 'Приложение с указанным ID не найдено' })
   @ApiForbiddenResponse({
     description: 'Недостаточно прав для удаления приложения',

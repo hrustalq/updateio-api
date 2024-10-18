@@ -13,6 +13,7 @@ import { HttpClientService } from '../http-client/http-client.service';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { AppsService } from 'src/apps/apps.service';
 import { GamesService } from 'src/games/games.service';
+import { PatchNoteFilterDto } from './dto/patch-note-filter.dto';
 
 @Injectable()
 export class PatchNotesService {
@@ -35,15 +36,26 @@ export class PatchNotesService {
     return patchNote;
   }
 
-  async findAll(pagination: PaginationParamsDto) {
+  async findAll(pagination: PaginationParamsDto, filter: PatchNoteFilterDto) {
     const skip = (pagination.page - 1) * pagination.limit;
     try {
+      const where = {
+        gameId: filter.gameId,
+        appId: filter.appId,
+      };
+
+      // Удаляем undefined значения из объекта where
+      Object.keys(where).forEach(
+        (key) => where[key] === undefined && delete where[key],
+      );
+
       const result = await this.prismaService.patchNote.findMany({
+        where,
         take: pagination.limit,
         skip,
         include: { game: true, app: true },
       });
-      const count = await this.prismaService.patchNote.count();
+      const count = await this.prismaService.patchNote.count({ where });
       return new PaginatedResult<PatchNote>(
         result,
         pagination.page,

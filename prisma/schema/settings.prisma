@@ -1,6 +1,6 @@
 model Settings {
   id         String   @id @default(uuid())
-  executorName  String @unique
+  executorName  String
   updateCommand String?
 
   gameId  String

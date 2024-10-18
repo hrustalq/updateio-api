@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -11,14 +10,20 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { PaginationParamsDto } from '../common/dto/pagination.dto';
 import { PaginatedResult } from '../common/utils/paginated';
 import { Settings, Prisma } from '@prisma/client';
+import { AppsService } from 'src/apps/apps.service';
+import { GamesService } from 'src/games/games.service';
 
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly appsService: AppsService,
+    private readonly gamesService: GamesService,
+  ) {}
 
   async findSettings(
     pagination: PaginationParamsDto,
-    { appId, gameId }: { appId?: string; gameId?: string }
+    { appId, gameId }: { appId?: string; gameId?: string },
   ) {
     const { page, limit } = pagination;
     const skip = (page - 1) * limit;
@@ -41,7 +46,9 @@ export class SettingsService {
       ]);
 
       if (result.length === 0 && (appId || gameId)) {
-        throw new NotFoundException('Настройки с указанными параметрами не найдены');
+        throw new NotFoundException(
+          'Настройки с указанными параметрами не найдены',
+        );
       }
 
       return new PaginatedResult<Settings>(result, page, limit, count);
@@ -71,36 +78,47 @@ export class SettingsService {
         },
       },
     });
-    if (find)
+    if (find) {
       throw new ConflictException(
         'Настройки для этой игры и приложения уже существуют!',
       );
+    }
+    await this.appsService.findOne(dto.appId);
+    await this.gamesService.findOne(dto.gameId);
+
     return this.prismaService.settings.create({
-      data: dto,
+      data: {
+        app: {
+          connect: {
+            id: dto.appId,
+          },
+        },
+        game: {
+          connect: {
+            id: dto.gameId,
+          },
+        },
+        executorName: dto.executorName,
+        updateCommand: dto.updateCommand,
+      },
     });
   }
 
   async updateSettings(id: string, dto: UpdateSettingsDto) {
-    if (!dto.gameId || !dto.appId)
-      throw new BadRequestException('Не указан id приложения и/или id игры');
     const find = await this.prismaService.settings.findUnique({
       where: {
         id: id,
-        gameId_appId: {
-          gameId: dto.gameId,
-          appId: dto.appId,
-        },
       },
     });
     if (!find) throw new NotFoundException('Записи настроек не существует');
     return this.prismaService.settings.update({
       where: {
-        gameId_appId: {
-          gameId: dto.gameId,
-          appId: dto.appId,
-        },
+        id,
       },
-      data: dto,
+      data: {
+        ...find,
+        ...dto,
+      },
     });
   }
 

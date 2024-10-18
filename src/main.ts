@@ -8,7 +8,14 @@ import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { UnauthorizedException, ValidationPipe } from '@nestjs/common';
 import fs from 'fs';
-import { NotFoundResponseDto, BadRequestResponseDto, ForbiddenResponseDto, InternalServerErrorResponseDto, UnauthorizedResponseDto, ConflicResponseDto } from './common/dto/error-response.dto';
+import {
+  NotFoundResponseDto,
+  BadRequestResponseDto,
+  ForbiddenResponseDto,
+  InternalServerErrorResponseDto,
+  UnauthorizedResponseDto,
+  ConflicResponseDto,
+} from './common/dto/error-response.dto';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -41,14 +48,14 @@ async function bootstrap() {
     swaggerConfig.documentBuilder,
     {
       extraModels: [
-        NotFoundResponseDto, 
-        BadRequestResponseDto, 
-        ForbiddenResponseDto, 
-        InternalServerErrorResponseDto, 
+        NotFoundResponseDto,
+        BadRequestResponseDto,
+        ForbiddenResponseDto,
+        InternalServerErrorResponseDto,
         UnauthorizedResponseDto,
-        ConflicResponseDto
+        ConflicResponseDto,
       ],
-    }
+    },
   );
   fs.writeFileSync('./swagger.json', JSON.stringify(document));
 

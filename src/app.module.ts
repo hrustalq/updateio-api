@@ -19,6 +19,7 @@ import { CombinedAuthGuard } from './auth/guards/combined-auth.guard';
 import { SettingsModule } from './settings/settings.module';
 import { AppController } from './app.controller';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { UpdatesModule } from './updates/updates.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     SettingsModule,
     AppsModule,
     SubscriptionsModule,
+    UpdatesModule,
   ],
   controllers: [AppController],
   providers: [

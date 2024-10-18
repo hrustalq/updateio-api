@@ -19,8 +19,9 @@ export class CombinedAuthGuard extends AuthGuard([
       context.getHandler(),
       context.getClass(),
     ]);
-    const isLocalLoginRoute = context.switchToHttp().getRequest().url === '/api/auth/login';
-    if (isLocalLoginRoute) return true
+    const isLocalLoginRoute =
+      context.switchToHttp().getRequest().url === '/api/auth/login';
+    if (isLocalLoginRoute) return true;
     if (isPublic) return true;
     return super.canActivate(context);
   }

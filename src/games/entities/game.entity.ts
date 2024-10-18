@@ -19,7 +19,11 @@ export class Game implements GameModel {
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ description: 'Название игры', example: 'Counter-Strike 2', required: true, })
+  @ApiProperty({
+    description: 'Название игры',
+    example: 'Counter-Strike 2',
+    required: true,
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -35,7 +39,13 @@ export class Game implements GameModel {
   @IsUrl()
   image: string | null;
 
-  @ApiProperty({ description: 'Версия игры', example: 2.0, required: false, type: 'number', nullable: true })
+  @ApiProperty({
+    description: 'Версия игры',
+    example: 2.0,
+    required: false,
+    type: 'number',
+    nullable: true,
+  })
   @IsNumber()
   @IsOptional()
   version: number | null;

@@ -6,7 +6,7 @@ export class Settings implements SettingsModel {
   @ApiProperty({
     description: 'ID настроек',
     example: '123e4567-e89b-12d3-a456-426614174000',
-    type: "string"
+    type: 'string',
   })
   @IsUUID()
   @IsNotEmpty()
@@ -15,7 +15,7 @@ export class Settings implements SettingsModel {
   @ApiProperty({
     description: 'ID приложения',
     example: 'app123',
-    type: "string"
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
@@ -24,7 +24,7 @@ export class Settings implements SettingsModel {
   @ApiProperty({
     description: 'ID игры',
     example: 'game456',
-    type: "string"
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
@@ -32,17 +32,17 @@ export class Settings implements SettingsModel {
 
   @ApiProperty({
     description: 'Название приложения, которое вызывает обновление',
-    type: 'string'
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
-  executorName: string
+  executorName: string;
 
   @ApiProperty({
     description: 'Команда, запускающая обновление',
-    type: 'string'
+    type: 'string',
   })
   @IsString()
   @IsNotEmpty()
-  updateCommand: string
+  updateCommand: string;
 }

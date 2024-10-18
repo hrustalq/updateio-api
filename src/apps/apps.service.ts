@@ -25,10 +25,11 @@ export class AppsService {
   async create(createAppDto: CreateAppDto, image?: Express.Multer.File) {
     const exists = await this.prismaService.app.findUnique({
       where: {
-        name: createAppDto.name
-      }
+        name: createAppDto.name,
+      },
     });
-    if (exists) throw new ConflictException("Игра с таким названием уже существует")
+    if (exists)
+      throw new ConflictException('Игра с таким названием уже существует');
 
     let imageUrl: string | undefined;
 
@@ -48,11 +49,15 @@ export class AppsService {
     return app;
   }
 
-  async findAll(pagination: PaginationParamsDto, name?: string, gameId?: string) {
+  async findAll(
+    pagination: PaginationParamsDto,
+    name?: string,
+    gameId?: string,
+  ) {
     const skip = (pagination.page - 1) * pagination.limit;
 
     try {
-      let where: Prisma.AppWhereInput = {};
+      const where: Prisma.AppWhereInput = {};
 
       if (name) {
         where.name = { contains: name, mode: Prisma.QueryMode.insensitive };
