@@ -168,7 +168,7 @@ export class UpdatesService {
     appId: string;
     userId: string;
     externalId?: string;
-    source: 'API' | 'IPC';
+    source: 'API' | 'IPC' | 'Telegram';
     updateCommand: string;
   }) {
     const { id, gameId, appId, userId, source, updateCommand } = msg;
@@ -187,7 +187,7 @@ export class UpdatesService {
           appId,
           userId,
           status: 'PENDING',
-          source: 'API',
+          source,
         },
       });
     }

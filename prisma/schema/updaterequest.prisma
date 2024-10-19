@@ -29,4 +29,5 @@ enum UpdateRequestStatus {
 enum UpdateRequestSource {
   IPC
   API
+  Telegram
 }

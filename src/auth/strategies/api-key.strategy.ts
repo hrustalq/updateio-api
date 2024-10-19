@@ -12,6 +12,7 @@ export class ApiKeyStrategy extends PassportStrategy(Strategy, 'api-key') {
 
   async validate(req: Request): Promise<any> {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('apiKey ')) {
       throw new UnauthorizedException(
         'Missing or invalid Authorization header',
