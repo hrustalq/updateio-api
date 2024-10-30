@@ -24,6 +24,7 @@ async function bootstrap() {
     .use(helmet())
     .use(cookieParser())
     .enableCors({
+      credentials: true,
       ...appConfig.cors,
       origin: (origin, callback) => {
         if (allowedOrigins.includes(origin) || !origin) {
